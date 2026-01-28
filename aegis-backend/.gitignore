@@ -31,3 +31,55 @@ build/
 
 ### VS Code ###
 .vscode/
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### Java / Maven / Gradle ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+### Logs ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Environment / Secrets ###
+.env
+.env.*
+application-local.yml
+application-local.yaml
+application-dev.yml
+application-dev.yaml
+
+### Flyway ###
+# Nunca versionar histórico local ou configs sensíveis
+flyway.conf
+
+### Database ###
+*.db
+*.sqlite
+*.sqlite3
+
+### Docker ###
+*.pid
+docker-compose.override.yml
+
+### Test reports ###
+/surefire-reports/
+/failsafe-reports/
+
+### Lombok ###
+.lombok
+
+### Temporary files ###
+*.tmp
+*.swp
+*.swo
