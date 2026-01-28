@@ -1,0 +1,261 @@
+
+Objetivo
+Implementar o **Batch Job** responsável por processamento pesado, determinístico e idempotente de dados financeiros. O Batch lê dados do banco PostgreSQL (Neon), realiza agregações e cálculos fora do fluxo de request e **envia exclusivamente dados DERIVADOS** para o Backend Core via endpoint interno protegido. O Batch NÃO altera estado de domínio diretamente no banco.
+
+Escopo desta entrega
+- Implementar apenas o Batch Job.
+- NÃO implementar Backend Core (já existente).
+- NÃO implementar BFF.
+- NÃO implementar Frontend.
+- O Batch deve ser deployado de forma independente (Fly.io), com execução agendada.
+- Garantir idempotência, observabilidade e segurança na comunicação com o Backend.
+
+Stack recomendada (defaults seguros)
+- Java 21
+- Spring Boot 3.x
+- Maven
+- Spring JDBC ou Spring Data JPA (somente leitura)
+- PostgreSQL (Neon)
+- Spring Scheduler
+- Flyway (apenas para schema compartilhado, não para alterar domínio)
+- Jackson
+- JUnit 5 + Mockito
+- Testcontainers (integração)
+- Docker (multi-stage)
+- Fly.io (deploy)
+
+Princípios arquiteturais obrigatórios
+1. Batch NÃO é dono da regra de negócio.
+2. Batch NÃO altera tabelas de domínio diretamente (orders, order_items).
+3. Batch apenas:
+   - Lê dados para processamento pesado.
+   - Calcula dados DERIVADOS.
+   - Submete resultados ao Backend via API interna.
+4. Toda escrita oficial acontece no Backend Core.
+5. Batch deve ser:
+   - Idempotente
+   - Determinístico
+   - Reexecutável sem efeitos colaterais
+6. Falhas devem ser detectáveis, logadas e recuperáveis.
+
+Responsabilidades do Batch
+- Executar fechamento diário automaticamente (ex.: 02:00).
+- Buscar pedidos do dia anterior.
+- Calcular:
+  - totalOrders
+  - totalRevenue
+  - topItems
+- Validar consistência mínima (ex.: pedidos negativos, totais).
+- Enviar payload consolidado ao Backend.
+- Registrar logs e métricas.
+- NÃO expor endpoints HTTP públicos.
+
+Domínio que o Batch CONHECE (somente leitura)
+- orders
+- order_items
+
+Domínio que o Batch NÃO conhece
+- Transições de estado
+- Validações de negócio
+- Lógica de cancelamento/pagamento
+- APIs públicas
+
+Estrutura de pacotes sugerida
+com.aegis.batch
+ ├── job
+ │   └── DailyCloseJob.java
+ ├── application
+ │   └── DailyReportCalculator.java
+ ├── infrastructure
+ │   ├── persistence
+ │   │   └── OrderReadRepository.java
+ │   ├── client
+ │   │   └── BackendClient.java
+ │   └── config
+ │       ├── SchedulerConfig.java
+ │       ├── DatasourceConfig.java
+ │       └── HttpClientConfig.java
+ └── shared
+     ├── dto
+     ├── exception
+     └── util
+
+Agendamento (Scheduler)
+- Usar Spring Scheduler
+- Cron padrão:
+  - `0 0 2 * * *` (02:00 todos os dias)
+- Timezone explícito (UTC ou America/Sao_Paulo — escolher e fixar)
+
+Exemplo lógico (alto nível)
+- Determinar data alvo: hoje - 1 dia
+- Verificar se o relatório já foi fechado (via Backend ou DB)
+- Se já fechado → encerrar execução (idempotência)
+- Buscar pedidos do dia alvo
+- Calcular totais
+- Enviar payload ao Backend
+- Logar sucesso ou erro
+
+Fonte da verdade para idempotência
+- Preferencial: Backend (GET /reports/{date})
+- Alternativa: tabela daily_reports (somente leitura)
+- Batch nunca “assume” sucesso sem confirmação do Backend
+
+Contrato com Backend (obrigatório)
+
+Endpoint interno (já existente no Backend):
+- POST /internal/reports/daily
+- Header obrigatório:
+  - X-SERVICE-TOKEN: <secret>
+- Payload:
+```json
+{
+  "reportDate": "YYYY-MM-DD",
+  "totalOrders": 128,
+  "totalRevenue": 24560.50,
+  "topItems": [
+    {"name":"Hambúrguer","qty":120},
+    {"name":"Refrigerante","qty":95}
+  ]
+}
+````
+
+Respostas esperadas:
+
+* 201 Created → relatório criado
+* 200 OK → relatório já existente (idempotência)
+* 4xx → erro de validação/autorização (falha definitiva)
+* 5xx → erro transitório (pode tentar novamente conforme política)
+
+Política de retry
+
+* Retry apenas em:
+
+  * Timeouts
+  * 5xx
+* Não retry em:
+
+  * 4xx
+* Backoff exponencial simples
+* Máximo de tentativas configurável (ex.: 3)
+
+Persistência no Batch
+
+* Batch NÃO cria nem altera schema.
+* Batch NÃO executa migrations.
+* Batch apenas usa datasource read-only (se possível).
+* Nenhuma escrita direta em tabelas do domínio.
+
+Segurança
+
+* Comunicação com Backend protegida por:
+
+  * Header X-SERVICE-TOKEN (secret do Fly.io)
+* Token nunca versionado em código.
+* Token injetado via variável de ambiente.
+* Logs NÃO devem imprimir token.
+
+Observabilidade
+
+* Logs estruturados (JSON)
+* Logar:
+
+  * Início e fim da execução
+  * Data processada
+  * Quantidade de pedidos
+  * Resultado do envio ao Backend
+* Métricas mínimas:
+
+  * batch_execution_success
+  * batch_execution_failure
+  * batch_execution_duration_ms
+
+Testes e critérios de aceitação
+
+* Unit tests:
+
+  * Cálculo de totais
+  * Agregação de itens
+* Integration tests:
+
+  * Leitura do PostgreSQL via Testcontainers
+  * Mock do Backend (WireMock ou similar)
+* Teste de idempotência:
+
+  * Executar o job duas vezes para a mesma data
+  * Confirmar apenas um envio efetivo
+
+Deploy — Fly.io (Batch)
+
+Requisitos
+
+* Serviço separado do Backend
+* Sem portas HTTP públicas
+* Execução contínua (scheduler ativo)
+* Pode escalar para zero? NÃO (scheduler precisa rodar)
+
+Dockerfile (exemplo mínimo)
+
+```dockerfile
+FROM eclipse-temurin:21 AS build
+WORKDIR /workspace
+COPY pom.xml mvnw ./
+COPY .mvn .mvn
+COPY src src
+RUN ./mvnw -B -DskipTests package
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /workspace/target/*.jar app.jar
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+ENTRYPOINT ["java", "-jar", "/app/app.jar", "--spring.profiles.active=prod"]
+```
+
+fly.toml (Batch)
+
+```toml
+app = "aegis-batch"
+primary_region = "fra"
+
+[env]
+  # DATABASE_URL
+  # BACKEND_BASE_URL
+  # X_SERVICE_TOKEN
+
+# Nenhum service exposto (sem portas)
+```
+
+Secrets obrigatórios no Fly.io
+
+* DATABASE_URL
+* BACKEND_BASE_URL
+* X_SERVICE_TOKEN
+
+Comandos:
+
+```bash
+flyctl secrets set DATABASE_URL=... BACKEND_BASE_URL=... X_SERVICE_TOKEN=...
+```
+
+Critérios de aceite do deploy
+
+* Batch inicia corretamente no Fly.io
+* Scheduler dispara no horário configurado
+* Logs mostram execução do job
+* Relatório é criado no Backend
+* Reexecução não cria duplicidade
+* Falhas são logadas claramente
+
+O que este Batch NÃO faz
+
+* Não expõe endpoints
+* Não fala com frontend
+* Não altera domínio
+* Não cria pedidos
+* Não fecha estado diretamente no banco
+
+Resultado esperado
+
+* Batch robusto, previsível e seguro
+* Backend continua sendo a única fonte de verdade
+* Arquitetura limpa, escalável e pronta para evolução (mensal, semanal, etc.)
+

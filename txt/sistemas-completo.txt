@@ -1,0 +1,267 @@
+# Sistema de Pedidos + Relatórios Financeiros
+
+## Problema real (justificativa da arquitetura)
+
+A empresa precisa:
+- Registrar pedidos em tempo real
+- Exibir dashboards rápidos para o usuário
+- Fechar o dia e gerar relatórios financeiros consolidados
+- Não travar o sistema durante cálculos pesados
+
+Experiência do usuário (fluxo):
+Durante o dia, o usuário acessa o dashboard no front-end, que exibe pedidos em tempo real, faturamento parcial e status do último pedido.
+Para criar um pedido, o usuário preenche os dados básicos e confirma; o pedido é registrado imediatamente e refletido no dashboard sem atrasos.
+O dashboard mantém atualização rápida, mesmo com múltiplos pedidos e dados acumulados.
+Ao final do dia, o sistema processa automaticamente os pedidos para gerar relatórios financeiros consolidados, sem ação manual do usuário.
+No dia seguinte, o usuário acessa o dashboard e encontra os resultados finais, com o status do dia fechado e relatórios prontos para análise ou exportação.
+
+### Pedido (Orders)
+
+| Campo         | Tipo             | Exemplo                                           | Descrição                          |
+|---------------|-----------------|-------------------------------------------------|-----------------------------------|
+| id            | UUID             | `3f9a8b2c-1d4e-4f12-a9c0-5e7d8f9e1234`          | Identificador único do pedido      |
+| customerName  | string           | `Maria Silva`                                    | Nome do cliente                    |
+| tableNumber   | int              | `12`                                             | Número da mesa (se aplicável)      |
+| items         | array            | `[{"name":"Hambúrguer","qty":2,"unitPrice":25.50},{"name":"Refrigerante","qty":2,"unitPrice":7.00}]` | Lista de itens com quantidade e preço unitário |
+| totalAmount   | decimal          | `65.00`                                          | Soma de todos os itens             |
+| status        | enum             | `CREATED / PAID / CANCELED`                     | Estado atual do pedido             |
+| createdAt     | datetime         | `2026-01-27T10:25:00`                           | Data e hora de criação             |
+| updatedAt     | datetime         | `2026-01-27T10:30:00`                           | Data e hora da última atualização  |
+
+### Relatório diário (Daily Reports)
+
+| Campo         | Tipo             | Exemplo                                           | Descrição                           |
+|---------------|-----------------|-------------------------------------------------|------------------------------------|
+| reportDate    | date             | `2026-01-26`                                     | Dia que o relatório cobre           |
+| totalOrders   | int              | `128`                                            | Número total de pedidos do dia      |
+| totalRevenue  | decimal          | `24560.50`                                       | Faturamento total do dia            |
+| topItems      | array            | `[{"name":"Hambúrguer","qty":120},{"name":"Refrigerante","qty":95}]` | Itens mais vendidos                 |
+| status        | enum             | `CLOSED`                                         | Indica se o dia foi fechado         |
+
+
+Nem tudo pode ser síncrono.
+Relatórios e fechamentos precisam rodar fora do fluxo de request.
+
+---
+
+## Visão geral da arquitetura
+
+Front (React / TypeScript)        → Vercel
+        ↓
+BFF (Node / Express)             → Fly.io
+        ↓
+Backend Core (Java / Spring)     → Fly.io
+        ↕
+PostgreSQL + Flyway              → Neon
+        ↑
+Batch Job (Java / Spring)        → Fly.io
+
+---
+
+## Coerência técnica
+
+- Mesma cloud para workloads backend
+- Banco externo e estável
+- Front desacoplado do core
+- Batch sempre disponível (sem depender de request)
+- Sem gambiarra ou acoplamento indevido
+
+---
+
+## Regras arquiteturais (IMPORTANTES)
+
+### 1) Backend é o único dono da regra de negócio
+- Validações
+- Mudança de estado
+- Invariantes do domínio
+
+O Batch NÃO pode alterar estado crítico diretamente no banco.
+Se precisar mudar estado de negócio, o batch chama um endpoint interno do backend.
+
+---
+
+### 2) Batch só acessa o banco para:
+- Leitura pesada
+- Agregações
+- Escrita DERIVADA (read model / reporting model)
+
+Exemplos válidos de escrita do batch:
+- daily_reports
+- monthly_financial_summary
+- audit_snapshot
+
+O batch NÃO altera:
+- status de pedidos
+- dados primários do domínio
+
+---
+
+### 3) BFF não é proxy burro
+O BFF precisa justificar sua existência:
+- Agrega dados de múltiplos endpoints
+- Transforma payloads
+- Expõe DTOs orientados à UI
+- Reduz número de chamadas do frontend
+- Pode aplicar cache de leitura e rate limit
+
+Se o BFF apenas repassar request/resposta, ele não deveria existir.
+
+---
+
+## Frontend (React + TypeScript)
+
+### Responsabilidades:
+- Mostrar dados
+- Renderizar dashboards
+- Disparar ações simples (ex: criar pedido)
+
+### O frontend NÃO faz:
+- Regra de negócio
+- Agregação complexa
+- Múltiplas chamadas diretas para o backend core
+
+### Exemplo de telas:
+- Dashboard financeiro
+- Lista de pedidos
+- Resumo do dia
+
+### O frontend conhece apenas:
+- GET /dashboard
+- POST /orders
+
+---
+
+## BFF (Node.js + Express + TypeScript)
+
+### Por que existe:
+O frontend quer dados prontos e simples, não vários pedaços de API.
+
+### Responsabilidades:
+- Agregar dados do backend
+- Transformar payloads
+- Expor contratos específicos para UI
+- Reduzir acoplamento entre front e core
+
+### Endpoint típico do BFF:
+GET /dashboard
+
+Resposta:
+{
+  "totalOrders": 128,
+  "totalRevenue": 24560.50,
+  "lastOrderAt": "2026-01-26T22:14:00",
+  "todayReportStatus": "CLOSED"
+}
+
+### O que o BFF chama internamente:
+- GET /orders?date=today
+- GET /reports/today
+
+O frontend não sabe disso.
+
+### O BFF NÃO faz:
+- Lógica financeira
+- Cálculos oficiais
+- Escrita direta em banco
+
+---
+
+## Backend Core (Java / Spring Boot)
+
+Esse é o coração do sistema.
+
+### Responsabilidades:
+- Regras de negócio
+- Estados e transições
+- Persistência
+- Validações
+- Consistência do domínio
+
+### Domínios principais:
+
+Pedido:
+CREATED → PAID → CANCELED
+
+Relatório:
+OPEN → CLOSED
+
+### Endpoints principais:
+- POST /orders
+- GET /orders?date=YYYY-MM-DD
+- GET /reports/today
+- GET /reports/{date}
+
+O backend:
+- NÃO se preocupa com UI
+- NÃO expõe contratos específicos de frontend
+- Pode ter múltiplos consumidores internos (BFF, batch)
+
+---
+
+## Batch Job (Java / Spring Scheduler)
+
+### Por que o batch existe:
+- Fechamento financeiro é pesado
+- Não pode rodar em request
+- Precisa ser determinístico
+- Precisa ser idempotente
+
+### O que o batch faz:
+Todos os dias às 02:00:
+- Busca pedidos do dia anterior
+- Valida consistência
+- Calcula totais
+- Gera relatório diário
+- Persiste dados DERIVADOS
+- Registra sucesso ou falha
+
+### Exemplo lógico:
+@Scheduled(cron = "0 0 2 * * *")
+@Transactional
+public void closeDay() {
+    LocalDate date = LocalDate.now().minusDays(1);
+
+    if (reportRepository.existsByDate(date)) {
+        return; // idempotência
+    }
+
+    List<Order> orders = orderRepository.findByDate(date);
+
+    BigDecimal total = orders.stream()
+        .map(Order::getAmount)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    reportRepository.save(
+        new DailyReport(date, total, orders.size())
+    );
+}
+
+Observações importantes:
+- Tabela de relatório tem índice único por data
+- Batch não expõe endpoint
+- Batch não fala com frontend
+- Batch não depende do BFF
+
+---
+
+## Banco de Dados (PostgreSQL + Flyway)
+
+### Tabelas principais:
+- orders (modelo de escrita / domínio)
+- daily_reports (modelo de leitura / relatório)
+
+Backend e batch:
+- Compartilham o banco
+- Respeitam limites claros de responsabilidade
+
+---
+
+## Deploy (realista)
+
+Tudo containerizado com Docker:
+
+- Frontend → Vercel
+- BFF → Fly.io
+- Backend → Fly.io
+- Batch → Fly.io
+- Database → Neon
