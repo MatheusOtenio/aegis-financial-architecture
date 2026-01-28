@@ -1,54 +1,42 @@
 package com.aegis.backend.domain.report;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "daily_reports")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DailyReport {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "report_date", nullable = false, unique = true)
-    private LocalDate reportDate;
-
-    @Column(name = "total_orders", nullable = false)
-    private Integer totalOrders;
-
-    @Column(name = "total_revenue", nullable = false)
-    private BigDecimal totalRevenue;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "top_items", nullable = false, columnDefinition = "jsonb")
-    private String topItems;
+    @Column(nullable = false, unique = true)
+    private LocalDate date;
 
     @Column(nullable = false)
-    private String status;
+    private Long totalOrders;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal totalRevenue;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-    
-    public DailyReport() {}
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReportStatus status;
 
-    public DailyReport(UUID id, LocalDate reportDate, Integer totalOrders, BigDecimal totalRevenue, String topItems, String status) {
-        this.id = id;
-        this.reportDate = reportDate;
+    // Construtor completo (modelo derivado, não tem transição de estado complexa)
+    public DailyReport(LocalDate date, Long totalOrders, BigDecimal totalRevenue) {
+        this.date = date;
         this.totalOrders = totalOrders;
         this.totalRevenue = totalRevenue;
-        this.topItems = topItems;
-        this.status = status;
-        this.createdAt = LocalDateTime.now();
+        this.status = ReportStatus.CLOSED; // Status fixo conforme regra
     }
-    
-    // Getters mínimos para o JSON serialization funcionar se necessário
-    public LocalDate getReportDate() { return reportDate; }
 }

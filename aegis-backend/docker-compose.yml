@@ -1,15 +1,48 @@
-﻿services:
+version: '3.9'
+
+services:
   postgres:
-    image: postgres:15-alpine
-    container_name: aegis-local-db
+    image: postgres:16-alpine
+    container_name: aegis-postgres
     environment:
-      POSTGRES_DB: aegis_db
-      POSTGRES_USER: aegis_user
-      POSTGRES_PASSWORD: local_password_123
+      POSTGRES_DB: aegis
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aegis-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/aegis
+      SPRING_DATASOURCE_USERNAME: aegis
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      AEGIS_SERVICE_TOKEN: "super-secret-batch-token"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - aegis-network
+    restart: on-failure
 
 volumes:
   postgres_data:
+
+networks:
+  aegis-network:
+    driver: bridge

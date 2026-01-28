@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/aegis
+    username: aegis
+    password: ${DB_PASSWORD:secret} # Fallback 'secret' para dev local
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    # PROIBIDO: update ou create-drop. Apenas validate para garantir integridade com Flyway.
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration

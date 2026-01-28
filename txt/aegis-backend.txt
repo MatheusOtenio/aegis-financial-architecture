@@ -1,348 +1,282 @@
-````text
-BACKEND CORE — DESCRIÇÃO TÉCNICA COMPLETA (PRONTA PARA ANEXAR) — INCLUINDO DEPLOY OBRIGATÓRIO PARA FLY.IO
+AEGIS — BACKEND CORE
+DESCRIÇÃO TÉCNICA DEFINITIVA (FONTE ÚNICA DE VERDADE)
 
-Objetivo
-Implementar exclusivamente o Backend Core (0 → 100%), pensado desde o início para deploy em Fly.io em produção. O Backend é responsável por regra de negócio, persistência, validações e exposição de APIs estáveis para consumidores internos (Batch e BFF). O Batch processa pedidos em Neon e SUBMETE resultados ao Backend via endpoint interno; o Backend valida e persiste. A fase de deploy em Fly.io é parte obrigatória do escopo.
+====================================================
+1. OBJETIVO DO BACKEND
+====================================================
 
-Escopo desta entrega
-- Implementar apenas o Backend Core (domínio, persistência, use-cases, API pública e endpoints internos).
-- Projetar, testar e executar o deploy em Fly.io com migrations seguras, secrets e CI/CD.
-- Documentar endpoints públicos e internos, política de autenticação de serviço e rollback.
-- Não implementar Batch, BFF ou Frontend (apenas contratos e endpoints para integração).
+Implementar o Backend Core do sistema Aegis Financial Architecture, responsável por:
 
-Stack recomendada (defaults seguros)
+- Dominar 100% das regras de negócio
+- Garantir consistência do domínio
+- Controlar transições de estado
+- Persistir dados primários e derivados
+- Expor APIs estáveis para consumidores internos (BFF e Batch)
+- Operar corretamente em ambiente local containerizado (Docker)
+
+Este backend deve ser desenvolvido assumindo que:
+- Ele NÃO conhece frontend
+- Ele NÃO conhece BFF
+- Ele NÃO conhece Batch internamente
+- Ele apenas expõe contratos claros e seguros
+
+====================================================
+2. ESCOPO EXATO DESTA ENTREGA
+====================================================
+
+INCLUI:
+- Domínio (Order, OrderItem, DailyReport)
+- Regras de negócio e invariantes
+- Casos de uso explícitos (application layer)
+- Persistência com PostgreSQL
+- Migrations versionadas com Flyway
+- APIs públicas (para BFF)
+- APIs internas protegidas (para Batch)
+- Observabilidade mínima
+- Execução local via Docker
+
+NÃO INCLUI:
+- Implementação do Batch
+- Implementação do BFF
+- Implementação do Frontend
+- Cache distribuído
+- Mensageria (Kafka, RabbitMQ, etc)
+- Deploy em cloud
+
+====================================================
+3. STACK TÉCNICA (OBRIGATÓRIA)
+====================================================
+
 - Java 21
 - Spring Boot 3.x
 - Maven
+- Spring Web
 - Spring Data JPA (Hibernate)
-- PostgreSQL (Neon)
-- Flyway para migrations
-- Jakarta Validation (Bean Validation)
+- PostgreSQL
+- Flyway (schema versioning)
+- Bean Validation (Jakarta)
 - Jackson
-- JUnit 5 + Mockito + Testcontainers (integração)
-- Docker (multi-stage)
-- Fly.io (deploy)
-- GitHub Actions (CI/CD)
+- Spring Actuator
+- JUnit 5 + Mockito
+- Testcontainers (integração)
+- Docker + Docker Compose
 
-Princípios arquiteturais obrigatórios
-1. Backend é o único dono das regras de negócio, transições de estado e invariantes.
-2. Schema será gerido por Flyway; Hibernate não gera schema (ddl-auto = none).
-3. Batch lê orders e order_items e SUBMETE relatórios derivados via endpoint interno; Batch NÃO altera estado de domínio diretamente no DB.
-4. BFF agrega endpoints do Backend; o Backend expõe APIs genéricas e estáveis.
-5. Endpoints internos (/internal/*) exigem autenticação de serviço (X-SERVICE-TOKEN) e devem estar protegidos por rede ou mTLS em produção.
-6. Projeto deve ser desenvolvido com perfis: dev, test, prod — e configuração separada para secrets.
-7. Observabilidade mínima: /actuator/health e /actuator/metrics, logs estruturados (JSON).
+Configurações proibidas:
+- spring.jpa.hibernate.ddl-auto != none
+- geração automática de schema
+- lógica de negócio em controller
 
-Domínio e modelos essenciais
+====================================================
+4. PRINCÍPIOS ARQUITETURAIS INEGOCIÁVEIS
+====================================================
 
+1. O Backend é o ÚNICO dono do domínio
+2. Nenhuma regra de negócio vive fora do domínio
+3. Batch NÃO altera estado diretamente no banco
+4. Batch só escreve dados DERIVADOS
+5. Backend valida tudo, sempre
+6. Toda escrita relevante gera audit log
+7. Execução local deve simular produção (Docker)
+
+====================================================
+5. MODELO DE DOMÍNIO
+====================================================
+
+-------------------------
 Order (Pedido)
-- Campos:
-  - id: UUID (PK)
-  - customer_name: varchar
-  - table_number: integer (nullable)
-  - status: ENUM {CREATED, PAID, CANCELED}
-  - total_amount: numeric (calculated no domínio)
-  - created_at: timestamp
-  - updated_at: timestamp
-- Regras:
-  - Novo pedido → status = CREATED
-  - total_amount = sum(items.qty * items.unit_price)
-  - Transições: CREATED → PAID; CREATED → CANCELED (se não PAID). PAID é final quanto a cancelamento.
-- OrderItem: id, order_id FK, name, quantity (>0), unit_price (>=0)
+-------------------------
 
-DailyReport (Modelo de leitura / relatório)
-- Campos:
-  - report_date: date (UNIQUE)
-  - total_orders: integer
-  - total_revenue: numeric
-  - top_items: jsonb
-  - status: ENUM {OPEN, CLOSED}
-  - created_at, updated_at
-- Observação: criação/fechamento é feita por Batch que envia payload via POST /internal/reports/daily; Backend valida idempotência e persiste.
+Campos:
+- id: UUID (PK)
+- customer_name: varchar NOT NULL
+- table_number: integer NULL
+- status: ENUM {CREATED, PAID, CANCELED}
+- total_amount: numeric NOT NULL
+- created_at: timestamp
+- updated_at: timestamp
 
-Estrutura de pacotes sugerida
+Regras de domínio:
+- Pedido nasce sempre em CREATED
+- total_amount é SEMPRE calculado no backend
+- Transições válidas:
+  - CREATED → PAID
+  - CREATED → CANCELED
+- PAID é estado final (não pode cancelar)
+- Cancelamento após pagamento é proibido
+
+-------------------------
+OrderItem
+-------------------------
+
+Campos:
+- id: UUID (PK)
+- order_id: FK orders(id)
+- name: varchar NOT NULL
+- quantity: integer > 0
+- unit_price: numeric >= 0
+
+Regras:
+- Pedido sem itens é inválido
+- Quantidade nunca pode ser zero ou negativa
+
+-------------------------
+DailyReport (Read Model)
+-------------------------
+
+Campos:
+- id: UUID (PK)
+- report_date: date UNIQUE
+- total_orders: integer
+- total_revenue: numeric
+- top_items: jsonb
+- status: ENUM {OPEN, CLOSED}
+- created_at
+- updated_at
+
+Observações:
+- NÃO representa domínio de negócio
+- É modelo derivado
+- Criado exclusivamente via endpoint interno
+- status sempre CLOSED ao persistir
+
+====================================================
+6. ESTRUTURA DE PACOTES (OBRIGATÓRIA)
+====================================================
+
 com.aegis.backend
  ├── domain
  │   ├── order
+ │   │   ├── Order.java
+ │   │   ├── OrderItem.java
+ │   │   └── OrderStatus.java
  │   └── report
+ │       ├── DailyReport.java
+ │       └── ReportStatus.java
  ├── application
- │   ├── order (CreateOrderUseCase, PayOrderUseCase, CancelOrderUseCase, ListOrdersUseCase)
- │   └── report (GetDailyReportUseCase, RegisterDailyReportUseCase)
+ │   ├── order
+ │   │   ├── CreateOrderUseCase
+ │   │   ├── PayOrderUseCase
+ │   │   ├── CancelOrderUseCase
+ │   │   └── ListOrdersUseCase
+ │   └── report
+ │       ├── GetDailyReportUseCase
+ │       └── RegisterDailyReportUseCase
  ├── infrastructure
- │   ├── persistence (jpa/entities, repositories)
- │   ├── web (controllers: public + internal)
- │   └── config (FlywayConfig, JacksonConfig, SecurityConfig)
- └── shared (exceptions, validation, dto mappers, audit)
+ │   ├── persistence
+ │   │   ├── jpa
+ │   │   └── repositories
+ │   ├── web
+ │   │   ├── public
+ │   │   └── internal
+ │   └── config
+ └── shared
+     ├── exceptions
+     ├── validation
+     ├── audit
+     └── dto
 
-Migrations Flyway (obrigatórias)
-- V1__create_orders_and_items.sql
-  - CREATE TABLE orders (...);
-  - CREATE TABLE order_items (..., order_id FK orders(id));
-  - índices: orders(created_at), orders(status), order_items(name)
-- V2__create_daily_reports.sql
-  - CREATE TABLE daily_reports (... UNIQUE(report_date));
-- V3__create_audit_logs.sql
-  - CREATE TABLE audit_logs (id, entity, entity_id, action, payload JSONB, created_at)
-- Flyway deve rodar em dev/test/prod via strategies controladas (release command ou CI).
+====================================================
+7. MIGRATIONS (FLYWAY)
+====================================================
 
-Esquema mínimo das tabelas (resumido)
-- orders(id UUID PK, customer_name, table_number, total_amount NUMERIC, status TEXT, created_at TIMESTAMP, updated_at TIMESTAMP)
-- order_items(id PK, order_id FK, name, quantity INT, unit_price NUMERIC)
-- daily_reports(id PK, report_date DATE UNIQUE, total_orders INT, total_revenue NUMERIC, top_items JSONB, status TEXT, created_at TIMESTAMP, updated_at TIMESTAMP)
-- audit_logs(...)
+V1__create_orders.sql
+- orders
+- order_items
+- índices em created_at, status, item name
 
-APIs públicas (BFF / Frontend consumidor)
-- POST /orders
-  - Body: { customerName, tableNumber?, items: [{name, quantity, unitPrice?}] }
-  - totalAmount sempre recalculado no servidor.
-- POST /orders/{id}/pay
-  - Transiciona CREATED → PAID; validações: existe, status atual.
-- POST /orders/{id}/cancel
-  - Transiciona para CANCELED seguindo regras de domínio.
-- GET /orders?date=YYYY-MM-DD
-  - Paginação opcional.
-- GET /reports/{date}
-  - Retorna daily_report salvo.
+V2__create_daily_reports.sql
+- daily_reports
+- UNIQUE(report_date)
 
-APIs internas (Batch → Backend) — proteger fortemente
-- POST /internal/reports/daily
-  - Proteção: X-SERVICE-TOKEN header or mutual TLS + network ACL.
-  - Payload:
-    {
-      "reportDate":"YYYY-MM-DD",
-      "totalOrders":128,
-      "totalRevenue":24560.50,
-      "topItems":[{"name":"Hambúrguer","qty":120}]
-    }
-  - Backend deve:
-    - Checar idempotência (unique report_date) → se existir, retornar 200 com message "already exists" ou 409 conforme política.
-    - Validar consistência básica.
-    - Persistir em daily_reports e inserir linha em audit_logs.
-    - Setar status = CLOSED.
-    - Retornar 201 criado.
+V3__create_audit_logs.sql
+- audit_logs (payload JSONB)
 
-Segurança mínima para endpoints internos
-- Internal endpoints só aceitam requests com header `X-SERVICE-TOKEN: <secret>` que será provisionado no Fly.io como secret.
-- Em produção, preferir mTLS ou rede privada entre Fly.io services + rotate tokens periodicamente.
-- Registrar todas chamadas do Batch em audit_logs com payload e origin.
+Flyway:
+- Executa em dev/test
+- Falha o startup se migration quebrar
+- Hibernate NÃO cria nada
 
-Observabilidade e métricas mínimas
-- Spring Actuator: /actuator/health (readiness/liveness), /actuator/metrics
-- Logs estruturados (JSON) com traceId/correlationId
-- Expor métricas Prometheus-compatible (Micrometer) ou configurar push para provider
+====================================================
+8. APIs PÚBLICAS (BFF / FRONT)
+====================================================
 
-Testes e critérios de aceitação
-- Unit tests:
-  - Regras de domínio (transições, cálculo de total).
-- Integration tests:
-  - Testcontainers (Postgres) executando Flyway migrations e validando repositories.
-- Contract tests:
-  - POST /orders cria e retorna total calculado.
-  - POST /orders/{id}/pay muda status adequadamente e bloqueia cancelamento posterior.
-  - POST /internal/reports/daily aceita payload idempotente e persiste daily_reports com status=CLOSED.
-- Aceitação de deploy:
-  - Health endpoint retorna 200.
-  - Flyway migrations aplicadas em produção (verificado em flyway_schema_history).
-  - App consegue conectar ao Neon (testar connection string).
-  - Internal endpoint protegido por X-SERVICE-TOKEN e audit_logs preenchido.
+POST /orders
+- Cria pedido
+- Backend calcula total_amount
 
-Infra & Deploy — requisitos e arquivos obrigatórios (Fly.io)
+POST /orders/{id}/pay
+- Valida existência
+- Valida estado atual
+- Transiciona para PAID
 
-1) Dockerfile (multi-stage, exemplo mínimo)
-- Objetivo: imagem pequena e determinística; usar multi-stage e OpenJDK 21.
-- Exemplo (multi-stage, fat-jar):
-```dockerfile
-# build stage
-FROM eclipse-temurin:21 AS build
-WORKDIR /workspace
-COPY pom.xml mvnw ./
-COPY .mvn .mvn
-COPY src src
-RUN ./mvnw -B -DskipTests package
+POST /orders/{id}/cancel
+- Permitido apenas se CREATED
 
-# runtime stage
-FROM eclipse-temurin:21-jre
-WORKDIR /app
-COPY --from=build /workspace/target/*.jar app.jar
-# JVM options recommended for Fly.io small instances
-ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
-EXPOSE 8080
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["sh", "-c", "java $JAVA_TOOL_OPTIONS -jar /app/app.jar --spring.profiles.active=prod"]
-````
+GET /orders?date=YYYY-MM-DD
+- Lista pedidos do dia
 
-* Observação: se desejar imagem menor, usar jlink e uma imagem base distroless; documentar trade-offs.
+GET /reports/{date}
+- Retorna relatório diário persistido
 
-2. fly.toml (exemplo)
+====================================================
+9. APIs INTERNAS (BATCH → BACKEND)
+====================================================
 
-```toml
-app = "aegis-backend"
-primary_region = "fra"
+POST /internal/reports/daily
 
-[env]
-  # placeholders; setados via flyctl secrets set
-  # DATABASE_URL = "postgres://user:pass@host:port/db"
-  # X_SERVICE_TOKEN = "..."
+Proteção:
+- Header X-SERVICE-TOKEN obrigatório
+- Secret configurado via env no Docker
 
-[[services]]
-  internal_port = 8080
-  protocol = "tcp"
+Comportamento:
+- Valida payload
+- Checa idempotência (report_date)
+- Se existir: retorna 200 ou 409
+- Persiste daily_report
+- Gera audit_log
+- Status = CLOSED
 
-  [[services.ports]]
-    handlers = ["http"]
-    port = 80
+====================================================
+10. SEGURANÇA
+====================================================
 
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+- Endpoints internos isolados
+- Token via variável de ambiente
+- Logs de todas chamadas internas
+- Sem exposição pública de endpoints /internal
 
-  [[services.http_checks]]
-    interval = 10000
-    grace_period = "10s"
-    method = "get"
-    path = "/actuator/health"
-    timeout = 3000
-    tls_skip_verify = false
-```
+====================================================
+11. OBSERVABILIDADE
+====================================================
 
-3. Migrations em produção (duas opções, documentar ambas)
+- /actuator/health
+- /actuator/metrics
+- Logs estruturados (JSON)
+- correlationId por request
 
-* Opção A (recomendada): executar Flyway migrations no CI antes do deploy:
+====================================================
+12. EXECUÇÃO LOCAL (DOCKER)
+====================================================
 
-  * GitHub Actions roda `mvn -DskipTests flyway:migrate -Dflyway.url=${{ secrets.DATABASE_URL }} -Dflyway.user=... -Dflyway.password=...`
-* Opção B: usar `release_command` no fly.toml para executar migrations antes do processo principal começar:
+- Backend e PostgreSQL via Docker Compose
+- Configuração por profiles (dev/test)
+- Banco efêmero para dev
+- Testcontainers para testes de integração
+- Ambiente local deve simular produção em comportamento
 
-```toml
-[experimental]
-  release_command = "java -jar /app/app.jar --spring.profiles.active=prod --spring.flyway.enabled=true"
-```
+====================================================
+13. CRITÉRIO DE ACEITAÇÃO FINAL
+====================================================
 
-* Escolha: Opção A é mais controlada e rastreável; Opção B é prática mas exige assegurar que migrations terminam antes do app ficar "ready".
+O backend está concluído quando:
+- Regras de domínio estão testadas
+- Migrations executam sem erro
+- APIs públicas funcionam
+- Endpoint interno protegido
+- Health endpoint retorna 200
+- Relatório diário pode ser registrado
+- Aplicação roda 100% via Docker local
 
-4. Secrets no Fly.io
-
-* Comandos:
-
-```bash
-flyctl secrets set DATABASE_URL="postgres://..." X_SERVICE_TOKEN="long-random-token"
-```
-
-* Rotacionamento: documentar processo de rotacionamento (set new secret, redeploy ou zero-downtime secret rotation, revogar antigo).
-
-5. CI/CD — GitHub Actions (exemplo básico)
-
-* Workflow steps:
-
-  * checkout
-  * cache mvn
-  * set up JDK 21
-  * mvn -B -DskipTests package
-  * mvn -DskipTests flyway:migrate (against prod DB)  # se optar migrar via CI
-  * run tests (unit + integration)
-  * flyctl auth token (via secrets)
-  * flyctl deploy --config fly.toml
-  * post-deploy smoke test (curl /actuator/health)
-* Exemplo YAML (resumido):
-
-```yaml
-name: CI CD
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - name: Build with Maven
-        run: ./mvnw -B -DskipTests package
-      - name: Run tests
-        run: ./mvnw test
-      - name: Flyway migrate (optional)
-        env:
-          FLYWAY_URL: ${{ secrets.DATABASE_URL }}
-        run: ./mvnw -Dflyway.url=${{ secrets.DATABASE_URL }} -Dflyway.user=${{ secrets.DB_USER }} -Dflyway.password=${{ secrets.DB_PASS }} flyway:migrate
-      - name: Deploy to Fly
-        env:
-          FLYCTL_INSTALL: /tmp/flyctl
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-        run: |
-          curl -L https://fly.io/install.sh | sh
-          export PATH="$PATH:/root/.fly/bin"
-          flyctl deploy --config fly.toml --remote-only
-      - name: Post-deploy healthcheck
-        run: |
-          sleep 10
-          curl -f https://aegis-backend.fly.dev/actuator/health
-```
-
-6. Rollback
-
-* Comando:
-
-```bash
-flyctl releases revert <release-id>
-```
-
-* Procedimento: identificar release com problema (`flyctl releases`), reverter e executar smoke tests.
-
-7. Verificações pós-deploy (aceitação)
-
-* `curl -f https://<app>.fly.dev/actuator/health` → 200
-* Verificar Flyway: `SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;`
-* Testar um fluxo mínimo:
-
-  * POST /orders → retorna 201 e total calculado
-  * POST /internal/reports/daily com X-SERVICE-TOKEN → 201 e audit_logs entry created
-* Validar logs e métricas no provider configurado
-
-8. Rollback e mitigação de problemas
-
-* Se migrations falharem no prod: não aplicar automatic rollback; analisar erro, corrigir migration, executar `flyctl deploy` com corrected migration after manual DB fix or run rollback SQL if safe.
-* Melhor prática: teste todas as migrations em staging (identical schema) antes de prod.
-
-Operacional: proteção de endpoints /internal/*
-
-* Requer header `X-SERVICE-TOKEN: <secret>` em chamadas ao endpoint interno
-* Verificar token em SecurityConfig (filter)
-* Registrar auditoria com origin service name e request body
-
-Checklist mínimo para considerar o deploy concluído
-
-* [ ] Repositório configurado com perfis (dev/test/prod)
-* [ ] Dockerfile multi-stage presente e funcionando
-* [ ] fly.toml criado e validado
-* [ ] Flyway migrations aplicam localmente e em staging
-* [ ] GitHub Actions pipeline definido e com secrets configurados
-* [ ] flyctl secrets set DATABASE_URL & X_SERVICE_TOKEN realizados
-* [ ] Deploy realizado com sucesso em Fly.io
-* [ ] Health endpoint 200 e smoke tests OK
-* [ ] Migrations aplicadas e registradas em flyway_schema_history
-* [ ] Internal endpoint testado com token e audit log gerado
-* [ ] Rollback flow testado (reverter release)
-
-Recomendações práticas e trade-offs (1 linha cada)
-
-* Migrations via CI (Flyway maven) evita problemas de concorrência no release_command; prefira CI-driven migrations.
-* release_command é útil em ambientes imutáveis; exigir cuidado com timeouts para não travar deploy.
-* Tokens rotativos + mTLS oferecem segurança extra; comece com X-SERVICE-TOKEN e evolua para mTLS.
-
-Documentos e artefatos que devem ser gerados (Deliverables)
-
-* Dockerfile (raiz)
-* fly.toml (raiz)
-* .github/workflows/ci-cd.yml (GitHub Actions)
-* SQL Migrations: V1__, V2__, V3__ (migrations/)
-* app/src/... Java code: domain, application, infrastructure, web
-* README.md com passos de deploy, secrets e rollback
-* Scripts úteis: scripts/fly-deploy.sh, scripts/check-health.sh
-* Test reports (CI artifacts)
-
-```
+====================================================
+FIM DO DOCUMENTO
+====================================================

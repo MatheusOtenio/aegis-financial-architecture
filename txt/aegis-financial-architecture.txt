@@ -46,15 +46,15 @@ Relatórios e fechamentos precisam rodar fora do fluxo de request.
 
 ## Visão geral da arquitetura
 
-Front (React / TypeScript)        → Vercel
+Front (React / TypeScript)       
         ↓
-BFF (Node / Express)             → Fly.io
+BFF (Node / Express)             
         ↓
-Backend Core (Java / Spring)     → Fly.io
+Backend Core (Java / Spring)     
         ↕
-PostgreSQL + Flyway              → Neon
+PostgreSQL + Flyway              
         ↑
-Batch Job (Java / Spring)        → Fly.io
+Batch Job (Java / Spring)        
 
 ---
 
@@ -258,10 +258,4 @@ Backend e batch:
 
 ## Deploy (realista)
 
-Tudo containerizado com Docker:
-
-- Frontend → Vercel
-- BFF → Fly.io
-- Backend → Fly.io
-- Batch → Fly.io
-- Database → Neon
+Tudo containerizado com Docker

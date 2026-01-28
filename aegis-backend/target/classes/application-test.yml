@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    # Em testes, usaremos Testcontainers, mas deixamos config básica caso necessário
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:postgresql:16:///aegis_test
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
