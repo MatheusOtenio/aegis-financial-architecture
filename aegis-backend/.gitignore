@@ -33,13 +33,9 @@ build/
 .vscode/
 ### IntelliJ IDEA ###
 .idea/
-*.iws
-*.iml
-*.ipr
 out/
 
 ### Java / Maven / Gradle ###
-target/
 !.mvn/wrapper/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.properties
 

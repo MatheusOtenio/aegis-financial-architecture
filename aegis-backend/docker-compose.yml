@@ -1,14 +1,15 @@
 ﻿services:
   postgres:
     image: postgres:15-alpine
-    container_name: aegis-postgres
+    container_name: aegis-local-db
     environment:
-      POSTGRES_DB: aegis
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: aegis_db
+      POSTGRES_USER: aegis_user
+      POSTGRES_PASSWORD: local_password_123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:
