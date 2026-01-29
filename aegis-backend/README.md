@@ -87,7 +87,6 @@ Durante o desenvolvimento, enfrentamos desafios técnicos que moldaram a soluç�
 
 1. **Configurar Ambiente**
    ```bash
-   cd docker
    cp .env.example .env
    ```
 

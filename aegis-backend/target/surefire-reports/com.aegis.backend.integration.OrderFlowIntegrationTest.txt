@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.aegis.backend.integration.OrderFlowIntegrationTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.75 s -- in com.aegis.backend.integration.OrderFlowIntegrationTest
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 9.495 s -- in com.aegis.backend.integration.OrderFlowIntegrationTest

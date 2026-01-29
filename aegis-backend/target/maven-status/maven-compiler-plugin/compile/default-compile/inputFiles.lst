@@ -1,11 +1,14 @@
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\AegisBackendApplication.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\audit\AuditService.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\BatchDailyOrderReadService.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\CancelOrderUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\CreateOrderUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\ListOrdersUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\PayOrderUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\report\GetDailyReportUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\report\RegisterDailyReportUseCase.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\domain\order\DailyOrderSlice.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\domain\order\DailyOrderSummary.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\domain\order\Order.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\domain\order\OrderItem.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\domain\order\OrderRepository.java
@@ -16,6 +19,7 @@ C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\jpa\AuditLogJpaRepository.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\jpa\DailyReportJpaRepository.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\jpa\OrderJpaRepository.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\jpa\OrderSummaryView.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\repositories\AuditLogRepositoryImpl.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\repositories\DailyReportRepositoryImpl.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\repositories\OrderRepositoryImpl.java
