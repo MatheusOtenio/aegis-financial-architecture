@@ -1,0 +1,26 @@
+services:
+  bff:
+    build: .
+    container_name: aegis-bff
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Permite acessar serviços rodando na máquina host (seu Backend Core local)
+      - BACKEND_URL=http://host.docker.internal:8080
+    depends_on:
+      - redis
+    # Mapeamento de volume para hot-reload não é o foco do Dockerfile de prod, 
+    # mas útil saber que em dev usamos ts-node localmente ou volume mapping.
+    # Aqui focamos em validar o container final.
+
+  redis:
+    image: redis:alpine
+    container_name: aegis-redis
+    ports:
+      - "6379:6379"
+    restart: always
