@@ -1,6 +1,7 @@
 com\aegis\backend\infrastructure\web\public_api\controller\OrderController.class
 com\aegis\backend\domain\order\DailyOrderSummary.class
 com\aegis\backend\application\audit\AuditService.class
+com\aegis\backend\application\job\DailyCloseJob.class
 com\aegis\backend\infrastructure\persistence\jpa\AuditLogJpaRepository.class
 com\aegis\backend\application\order\ListOrdersUseCase.class
 com\aegis\backend\infrastructure\persistence\repositories\DailyReportRepositoryImpl.class
@@ -23,6 +24,7 @@ com\aegis\backend\domain\order\Order.class
 com\aegis\backend\infrastructure\web\internal_api\controller\DailyReportRequest.class
 com\aegis\backend\application\report\GetDailyReportUseCase.class
 com\aegis\backend\application\order\CreateOrderUseCase.class
+com\aegis\backend\infrastructure\web\internal_api\controller\ManualJobController.class
 com\aegis\backend\shared\audit\AuditLogRepository.class
 com\aegis\backend\AegisBackendApplication.class
 com\aegis\backend\domain\report\DailyReportRepository.class
@@ -30,6 +32,7 @@ com\aegis\backend\infrastructure\web\advice\GlobalExceptionHandler.class
 com\aegis\backend\infrastructure\web\public_api\dto\CreateOrderRequest.class
 com\aegis\backend\infrastructure\web\public_api\controller\ReportController.class
 com\aegis\backend\application\order\PayOrderUseCase.class
+com\aegis\backend\infrastructure\web\internal_api\controller\InternalOrderController.class
 com\aegis\backend\domain\order\DailyOrderSlice.class
 com\aegis\backend\application\report\RegisterDailyReportUseCase.class
 com\aegis\backend\infrastructure\web\internal_api\controller\InternalReportController.class

@@ -10,7 +10,7 @@ server:
 # Configuração de Segurança Interna (mantendo o que já existia)
 aegis:
   security:
-    service-token: ${AEGIS_SERVICE_TOKEN:dev-token-123}
+    service-token: ${AEGIS_SERVICE_TOKEN:super-secret-batch-token}
 
 # NOVA CONFIGURAÇÃO: Actuator
 management:

@@ -1,5 +1,6 @@
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\AegisBackendApplication.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\audit\AuditService.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\job\DailyCloseJob.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\BatchDailyOrderReadService.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\CancelOrderUseCase.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\application\order\CreateOrderUseCase.java
@@ -24,7 +25,9 @@ C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\repositories\DailyReportRepositoryImpl.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\persistence\repositories\OrderRepositoryImpl.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\advice\GlobalExceptionHandler.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\internal_api\controller\InternalOrderController.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\internal_api\controller\InternalReportController.java
+C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\internal_api\controller\ManualJobController.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\public_api\controller\OrderController.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\public_api\controller\ReportController.java
 C:\Users\matel\Desktop\aegis-financial-architecture\aegis-backend\src\main\java\com\aegis\backend\infrastructure\web\public_api\dto\CreateOrderRequest.java

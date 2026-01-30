@@ -20,7 +20,7 @@ management:
 aegis:
   backend:
     url: ${BACKEND_BASE_URL:http://localhost:8080}
-    token: ${X_SERVICE_TOKEN:dev-token-123}
+    token: ${X_SERVICE_TOKEN:super-secret-batch-token}
   job:
     cron: "0 0 1 * * *" # Ex: 01:00 AM todo dia
     retry:
