@@ -34,3 +34,14 @@
 .env
 *.env
 txt/
+
+# Maven
+**/target/
+# Gradle
+build/
+
+# IDE
+.idea/
+
+/aegis-backend/target/
+/aegis-batch/target/

@@ -1,9 +1,0 @@
-com\aegis\batch\application\DailyReportCalculator.class
-com\aegis\batch\infrastructure\client\BackendClient.class
-com\aegis\batch\job\DailyCloseJob.class
-com\aegis\batch\application\DailyReportCalculator$Accumulator.class
-com\aegis\batch\infrastructure\web\ManualTriggerController.class
-com\aegis\batch\shared\dto\OrderDto.class
-com\aegis\batch\AegisBatchApplication.class
-com\aegis\batch\shared\dto\DailyReportDto.class
-com\aegis\batch\infrastructure\config\HttpClientConfig.class

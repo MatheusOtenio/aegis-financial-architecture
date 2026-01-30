@@ -1,8 +1,0 @@
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\AegisBatchApplication.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\application\DailyReportCalculator.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\infrastructure\client\BackendClient.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\infrastructure\config\HttpClientConfig.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\infrastructure\web\ManualTriggerController.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\job\DailyCloseJob.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\shared\dto\DailyReportDto.java
-C:\Users\matel\Desktop\aegis-financial-architecture\aegis-batch\src\main\java\com\aegis\batch\shared\dto\OrderDto.java
