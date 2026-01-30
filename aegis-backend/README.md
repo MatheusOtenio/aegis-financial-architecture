@@ -112,11 +112,11 @@ Durante o desenvolvimento, enfrentamos desafios técnicos que moldaram a soluç�
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `POST` | `/orders` | Cria um novo pedido (Status: CREATED) |
-| `POST` | `/orders/{id}/pay` | Processa pagamento (CREATED → PAID) |
-| `POST` | `/orders/{id}/cancel` | Cancela pedido (CREATED → CANCELED) |
-| `GET` | `/orders?date=YYYY-MM-DD` | Lista pedidos do dia |
-| `GET` | `/reports/{date}` | Consulta relatório consolidado |
+| `POST` | `/orders` | Cria um novo pedido (201 CREATED). |
+| `POST` | `/orders/{id}/pay` | Processa pagamento (204 NO_CONTENT). |
+| `POST` | `/orders/{id}/cancel` | Cancela pedido (204 NO_CONTENT). |
+| `GET` | `/orders?date=YYYY-MM-DD` | Lista pedidos do dia (200 OK; se não informar, assume data atual). |
+| `GET` | `/reports/{date}` | Consulta relatório consolidado (200 OK). |
 
 ### API Interna (Batch / Sistema)
 
@@ -124,7 +124,16 @@ Requer Header: `X-SERVICE-TOKEN: super-secret-batch-token`
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `POST` | `/internal/reports/daily` | Registra/Consolida relatório diário |
+| `GET` | `/internal/orders/daily?date=YYYY-MM-DD` | Stream JSON com pedidos do dia (200 OK). |
+| `POST` | `/internal/reports/daily` | Registra/Consolida relatório diário (201 CREATED). |
+
+### Jobs Manuais (Interno)
+
+Requer Header: `X-SERVICE-TOKEN: super-secret-batch-token`
+
+| Método | Endpoint | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/manual/jobs/daily-close?date=YYYY-MM-DD` | Dispara fechamento diário assíncrono (202 ACCEPTED; `date` opcional, padrão hoje). |
 
 ***
 
