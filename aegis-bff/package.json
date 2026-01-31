@@ -20,7 +20,7 @@
     "ioredis": "^5.9.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^13.0.0",
+    "uuid": "^8.3.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
