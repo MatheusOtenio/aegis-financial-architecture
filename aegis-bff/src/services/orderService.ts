@@ -21,7 +21,7 @@ export class OrderService {
 
     async createOrder(input: CreateOrderInput): Promise<OrderResponse> {
         if (env.USE_MOCKS) {
-            console.log('⚠️ Using MOCK for createOrder');
+            console.log('Using MOCK for createOrder');
             return {
                 id: uuidv4(),
                 status: 'CREATED',
