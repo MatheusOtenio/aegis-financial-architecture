@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { orderService } from '../services/orderService';
 import { CreateOrderInput } from '../dtos/order.dto';
+import { z } from 'zod';
 
 export class OrdersController {
     async create(req: Request, res: Response, next: NextFunction) {
@@ -14,11 +15,27 @@ export class OrdersController {
         }
     }
 
-    // Placeholder para GET /orders (implementaremos lógica real na próxima fase)
     async list(req: Request, res: Response, next: NextFunction) {
         try {
-            // Retorna array vazio por enquanto apenas para validar rota
-            res.json({ data: [], meta: { page: 1, total: 0 } });
+            // Validação simples de query param (default para hoje se vazio)
+            const date = typeof req.query.date === 'string'
+                ? req.query.date
+                : new Date().toISOString().split('T')[0];
+
+            // Opcional: Validar formato YYYY-MM-DD
+            const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+            const validatedDate = dateSchema.parse(date);
+
+            const data = await orderService.listOrders(validatedDate);
+
+            res.json({
+                data,
+                meta: {
+                    date: validatedDate,
+                    source: 'cache-first', // Apenas informativo
+                    count: data.length
+                }
+            });
         } catch (error) {
             next(error);
         }
