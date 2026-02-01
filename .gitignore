@@ -1,47 +1,75 @@
-/target/
+############################
+# Java / Maven / Gradle
+############################
+
+# Maven
+**/target/
 !.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+**/build/
+
+############################
+# Java resources (versionados)
+############################
+
 !**/src/main/resources/**
 !**/src/test/resources/**
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+############################
+# IDEs
+############################
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IntelliJ
+.idea/
 *.iml
+*.iws
 *.ipr
 
-### NetBeans ###
+# Eclipse / STS
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache/
+
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### Mac/Linux ###
+############################
+# OS / misc
+############################
+
 .DS_Store
 *.log
+
+############################
+# Environment variables
+############################
+
 .env
 *.env
+
+############################
+# Node — aegis-bff
+############################
+
+aegis-bff/node_modules/
+aegis-bff/dist/
+aegis-bff/coverage/
+
+
+############################
+# Outros
+############################
+
 txt/
-
-# Maven
-**/target/
-# Gradle
-build/
-
-# IDE
-.idea/
-
-/aegis-backend/target/
-/aegis-batch/target/

@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: Aegis BFF API
+  version: 1.0.0
+  description: Backend for Frontend para Aegis Financial Architecture.
+servers:
+  - url: http://localhost:3000
+    description: Servidor Local
+paths:
+  /health/ready:
+    get:
+      summary: Verifica se o BFF e suas dependências estão prontos
+      tags: [Ops]
+      responses:
+        '200':
+          description: Sistema pronto
+          content:
+            application/json:
+              example: { "status": "READY", "checks": { "redis": "UP" } }
+        '503':
+          description: Sistema indisponível
+  
+  /api/orders:
+    get:
+      summary: Lista pedidos (com cache)
+      tags: [Orders]
+      parameters:
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Data para filtro (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderSummary'
+    
+    post:
+      summary: Cria um novo pedido
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderInput'
+      responses:
+        '201':
+          description: Pedido criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Erro de validação
+
+components:
+  schemas:
+    CreateOrderInput:
+      type: object
+      required:
+        - customerId
+        - items
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        items:
+          type: array
+          items:
+            type: object
+            required: [productId, quantity, unitPrice]
+            properties:
+              productId: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 1 }
+              unitPrice: { type: number, minimum: 0.01 }
+    
+    OrderResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, example: "CREATED" }
+        displayStatus: { type: string, example: "Aguardando Pagamento" }
+        totalAmount: { type: number }
+    
+    OrderSummary:
+      type: object
+      properties:
+        id: { type: string }
+        total: { type: number }
+        status: { type: string }
+        date: { type: string, format: date-time }
