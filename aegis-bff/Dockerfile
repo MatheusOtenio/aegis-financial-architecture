@@ -17,6 +17,7 @@ WORKDIR /app
 # Copiar apenas arquivos necessários para produção
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/openapi ./openapi
 
 # Instalar apenas dependências de produção
 RUN npm ci --omit=dev

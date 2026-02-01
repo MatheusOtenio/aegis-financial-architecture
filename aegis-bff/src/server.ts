@@ -1,5 +1,8 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { parse } from 'yaml';
+import swaggerUi from 'swagger-ui-express';
 import { router } from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import { helmetConfig, corsConfig, limiter } from './middleware/security';
@@ -21,6 +24,12 @@ app.use(limiter);
 // Middleware de parsing
 // ----------------------
 app.use(express.json());
+
+// ----------------------
+// Documentação (Swagger)
+// ----------------------
+const swaggerDocument = parse(fs.readFileSync('./openapi/openapi.yaml', 'utf8'));
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // ----------------------
 // Rota Health
