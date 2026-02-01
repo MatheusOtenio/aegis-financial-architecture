@@ -21,7 +21,7 @@ O **Aegis BFF** é uma camada de adaptação entre o Frontend (ainda em desenvol
 ## Stack Tecnológica
 
 ### Core & Framework
-- **Node.js v24 (Active LTS)** - Versão estável para produção [nodejs.org] [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/158153641/5bc20c52-841a-4874-8e21-314d99afc66e/bff-fases.txt)
+- **Node.js v24 (Active LTS)** - Versão estável para produção
 - **Express v5** - API moderna, compatível com TypeScript
 - **TypeScript 5.3+** - Tipagem estrita em tempo de compilação
 - **Zod 3.x** - Validação de DTOs em runtime (source of truth para contratos)
