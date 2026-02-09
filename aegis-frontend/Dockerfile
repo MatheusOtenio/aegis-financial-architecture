@@ -2,15 +2,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 ARG NEXT_PUBLIC_BFF_BASE_URL
+ARG NEXT_PUBLIC_USE_MOCKS_UI
 ENV NEXT_PUBLIC_BFF_BASE_URL=${NEXT_PUBLIC_BFF_BASE_URL}
+ENV NEXT_PUBLIC_USE_MOCKS_UI=${NEXT_PUBLIC_USE_MOCKS_UI}
 
 COPY package.json package-lock.json* ./
 
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 
@@ -34,4 +35,3 @@ RUN npm ci --omit=dev
 EXPOSE 3001
 
 CMD ["npm", "run", "start"]
-
