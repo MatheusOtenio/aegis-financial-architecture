@@ -51,8 +51,8 @@ flowchart TD
 
 ### Componentes e Responsabilidades
 
-* **Frontend (Next.js):** Interface de gestão operacional voltada para o monitoramento de saúde do sistema, visualização de indicadores e administração de pedidos.
-* **BFF (Backend for Frontend):** Atua como orquestrador e agregador de dados para a interface. Implementa validação de esquemas (Zod), gestão de sessões e abstração de contratos complexos do backend core.
+* **Frontend (React/Next.js):** Interface de gestão operacional voltada para o monitoramento de saúde do sistema, visualização de indicadores e administração de pedidos.
+* **BFF (Node/Express):** Atua como orquestrador e agregador de dados para a interface. Implementa validação de esquemas (Zod), gestão de sessões e abstração de contratos complexos do backend core.
 * **Backend Core (Spring Boot):** O núcleo transacional que detém as regras de domínio, persistência em banco de dados relacional e exposição de APIs de alta disponibilidade.
 * **Batch Service (Spring Boot):** Módulo especializado em processamento de dados históricos e fechamento de ciclos financeiros (D-1). Utiliza técnicas de streaming para processar grandes conjuntos de dados sem sobrecarregar a memória heap da JVM.
 
@@ -81,11 +81,15 @@ Para evitar gargalos de performance e consumo excessivo de memória, o serviço 
 
 O serviço Batch não possui acesso direto à base de dados do Backend Core. Toda a comunicação é realizada via APIs, respeitando o princípio de encapsulamento e garantindo que apenas o Core tenha autoridade sobre a persistência dos dados transacionais.
 
-## Documentação Técnica por Módulo
+## Galeria do Projeto
 
-Para detalhes sobre instalação, execução e endpoints específicos de cada serviço, consulte os respectivos arquivos README:
+|        Início do fluxo de pedido         |        Criar pedidos        |
+|:-----------------------------:|:----------------------:|
+|  ![Página Inicial](img/1.png)   | ![Catálogo](img/2.png) |
 
-* [Documentação: Aegis Backend Core](https://www.google.com/search?q=aegis-backend/README.md)
-* [Documentação: Aegis BFF](https://www.google.com/search?q=aegis-bff/README.md)
-* [Documentação: Aegis Batch Service](https://www.google.com/search?q=aegis-batch/README.md)
-* [Documentação: Aegis Frontend](https://www.google.com/search?q=aegis-frontend/README.md)
+
+|       Fechamento do Dia       |        Docker        |
+|:--------------------------------:|:----------------------:|
+| ![Itens Selecionados](img/3.png) | ![Carrinho](img/4.png) |
+
+
