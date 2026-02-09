@@ -7,6 +7,17 @@
 
 Esta documentação descreve a especificação técnica e a estrutura de diretórios do ecossistema Aegis, um sistema distribuído projetado para gestão, processamento e monitoramento de transações financeiras.
 
+## Galeria do Projeto
+
+|        Início do fluxo de pedido         |        Criar pedidos        |
+|:-----------------------------:|:----------------------:|
+|  ![Página Inicial](img/1.png)   | ![Catálogo](img/2.png) |
+
+
+|       Fechamento do Dia       |        Docker        |
+|:--------------------------------:|:----------------------:|
+| ![Itens Selecionados](img/3.png) | ![Carrinho](img/4.png) |
+
 ## Visão Geral
 
 O Aegis Financial Architecture é uma plataforma voltada para o processamento transacional diário, garantindo a integridade dos dados, a segregação de responsabilidades e a observabilidade operacional. O sistema resolve a complexidade de lidar com grandes volumes de dados financeiros através de uma arquitetura desacoplada, permitindo que operações de interface, regras de negócio centrais e processamento pesado de dados em lote (batch) evoluam de forma independente e segura.
@@ -81,15 +92,5 @@ Para evitar gargalos de performance e consumo excessivo de memória, o serviço 
 
 O serviço Batch não possui acesso direto à base de dados do Backend Core. Toda a comunicação é realizada via APIs, respeitando o princípio de encapsulamento e garantindo que apenas o Core tenha autoridade sobre a persistência dos dados transacionais.
 
-## Galeria do Projeto
-
-|        Início do fluxo de pedido         |        Criar pedidos        |
-|:-----------------------------:|:----------------------:|
-|  ![Página Inicial](img/1.png)   | ![Catálogo](img/2.png) |
-
-
-|       Fechamento do Dia       |        Docker        |
-|:--------------------------------:|:----------------------:|
-| ![Itens Selecionados](img/3.png) | ![Carrinho](img/4.png) |
 
 
